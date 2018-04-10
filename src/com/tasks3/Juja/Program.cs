@@ -85,80 +85,134 @@ namespace Prog
 
               }*/
             matrix = new int[,] {
-                {2, 2, 2, 2, 2, 4, 4},
-                {2, 2, 2, 2, 2, 2, 4},
-                {2, 2, 2, 2, 2, 7, 4},
-                {4, 4, 6, 6, 6, 6, 4},
-                {4, 4, 6, 6, 6, 6, 4},
-                {5, 5, 6, 6, 6, 6, 7},
-                {8, 4, 4, 4, 4, 4, 4}};
+                {1, 1, 1, 1, 1, 1, 1},
+                {2, 2, 1, 1, 1, 1, 1},
+                {2, 2, 1, 1, 1, 1, 1},
+                {2, 2, 5, 5, 5, 5, 5},
+                {2, 2, 5, 5, 5, 5, 5},
+                {2, 2, 7, 7, 7, 7, 7},
+                {2, 2, 7, 7, 7, 7, 7}};
         }
+        /*  matrix = new int[,] {
+              {1, 1, 1, 2, 1, 1, 1},
+              {2, 2, 2, 2, 2, 2, 4},
+              {2, 2, 2, 2, 2, 2, 4},
+              {6, 2, 6, 2, 2, 2, 6},
+              {6, 6, 6, 2, 2, 2, 6},
+              {8, 8, 8, 2, 2, 2, 1},
+              {8, 8, 8, 8, 0, 0, 1}};
 
-        public int searchInRow(int i, int j, int lengthRow)
+      }*/
+
+        public int searchInRow(int i, int j)
         {
-            int matrixLengthRow = 1;
-            int iterRow = i;
-            for (int jterRow = j; jterRow <= lengthRow - 1; jterRow++)
+            int width = 1;
+            int iter = i;
+            int jter = j;
+            for (; jter < m - 1; jter++)
             {
-                if (matrix[iterRow, jterRow] == matrix[iterRow, jterRow + 1])
+                if (matrix[iter, jter] == matrix[iter, jter + 1])
                 {
-                    matrixLengthRow += 1;
-
+                    width += 1;
                 }
                 else break;
             }
-            return matrixLengthRow;
-
+            //    elementsSubMatrix[countS++] = new Struct(i, j, jter, width, ((width - i + 1) * (jter - j + 1)), matrix[i, j]);
+            return width;
         }
-        public int searchInColomn(int i, int j, int lengthColomn)
+        public int searchInColomn(int i, int j)
         {
-            int matrixLengthColomn = 1;
-            int jterColomn = j;
-            for (int iterColomn = i; iterColomn <= lengthColomn - 1; iterColomn++)
+            int height = 1;
+            int jter = j;
+            int iter = i;
+            for (; iter < n - 1; iter++)
             {
-                if (matrix[iterColomn, jterColomn] == matrix[iterColomn + 1, jterColomn])
+                if (matrix[iter, jter] == matrix[iter + 1, jter])
                 {
-                    matrixLengthColomn += 1;
+                    height += 1;
                 }
                 else break;
             }
-            return matrixLengthColomn;
+            //    elementsSubMatrix[countS++] = new Struct(i, j, iter, height, ((height - i + 1) * (height - j + 1)), matrix[i, j]);
+            return height;
         }
 
-        public bool hasAdjacent(int i, int j)
+        public bool hasAdjacent(int i, int j, ref bool isColomn, ref bool isRow)
         {
-
-            return (matrix[i, j] == matrix[i + 1, j] &&
-                        matrix[i, j] == matrix[i, j + 1] &&
-                    matrix[i, j] == matrix[i + 1, j + 1]);
+            if (i + 1 == n - 1 && j + 1 == m - 1)
+            {
+                isColomn = false;
+                isRow = false;
+                return false;
+            }
+            if(i<n-1 && j<m-1){
+               if (i < j) isRow = true;
+                if (i > j) isColomn = true;
+                if (i == j)
+                {
+                    isRow = false;
+                    isColomn = false;
+                }
+                if (matrix[i, j] == matrix[i + 1, j] &&
+                  matrix[i, j] == matrix[i, j + 1] &&
+                  matrix[i, j] == matrix[i + 1, j + 1])
+                {
+                    return true;
+                }
+            }
+            return false;
         }
 
-        public void searchInSubMatrix(int i, int j, int matrixLengthRow, int matrixLengthColomn)
+        public void searchInSubMatrix(int i, int j, int width, int height)
         {
             bool isTop = false;
             int iterSquare = i;
-           int jterSquare = j;
-            for (; iterSquare < matrixLengthRow - 1; iterSquare++)
+            int jterSquare = j;
+            bool isRow = false, isColomn = false;
+            //Console.WriteLine($"{matrixLengthRow} {matrixLengthColomn}");
+            for (; iterSquare < height + i; iterSquare++)
             {
-                for (; jterSquare < matrixLengthColomn - 1; jterSquare++)
+                for (jterSquare = j; jterSquare < width + j; jterSquare++)
                 {
-                    if (hasAdjacent(iterSquare, jterSquare))
+
+                    if (hasAdjacent(iterSquare, jterSquare, ref isColomn, ref isRow) == true)
                     {
                         isTop = true;
+                                         
                     }
-                    else break;
+                    if (hasAdjacent(iterSquare, jterSquare, ref isColomn, ref isRow) == false)
+                    {
+
+                        break;
+                    }
+                }
+
+                if (isTop == true)
+                {
+                    break;
                 }
             }
+
             if (isTop)
+                elementsSubMatrix[countS++] = new Struct(i, j,  height - 1 + i, jterSquare , ((height) * (jterSquare-j+1)), matrix[i, j]);
+
+            j++;
+            if (j == m - 1 && i < n - 1)
             {
-                 elementsSubMatrix[countS++] = new Struct(i,j,jterSquare,iterSquare,((iterSquare - i + 1) * (jterSquare - j + 1)), matrix[i, j]);
-               // searchInSubMatrix(i++, jterSquare, searchInRow(i++, jterSquare, m - 1), searchInColomn(i++, jterSquare, n - 1));
+                i++;
+                j = 0;
+
             }
-          //  searchInSubMatrix(i+1, j+1, searchInRow(i+1, j+1, m - 1), searchInColomn(i+1, j+1, n - 1));
-              
+            if (i == n - 1)
+            {
+                Console.WriteLine("Done");
+                return;
+            }
+            if (i < n && j < m)
+                searchInSubMatrix(i, j, searchInRow(i, j), searchInColomn(i, j));
+
         }
- 
-      }
+    }
 
 
 
@@ -170,8 +224,8 @@ namespace Prog
             program.inputMatrix();
             Console.WriteLine("Matrix :\n");
             program.print();
-            program.searchInSubMatrix(0, 0 , program.searchInRow(0, 0, program.m - 1), program.searchInColomn(0, 0, program.n - 1));
-;
+            program.searchInSubMatrix(0, 0, program.searchInRow(0, 0), program.searchInColomn(0, 0));
+            ;
             //  Console.WriteLine($"[x0,y0] [{program.elements[0].x0},{program.elements[0].y0}]");
             /*  for (int i = 0; i < program.countRC; i++)
               {
@@ -182,15 +236,15 @@ namespace Prog
                   Console.WriteLine($"color [{program.elementsRC[i].color}]");
 
               }*/
-             for (int i = 0; i < program.countS; i++)
-             {
-                 Console.WriteLine($"\nRESULT :");
-                 Console.WriteLine($"[x0,y0] [{program.elementsSubMatrix[i].x0},{program.elementsSubMatrix[i].y0}]");
-                 Console.WriteLine($"[x1,y1] [{program.elementsSubMatrix[i].x1},{program.elementsSubMatrix[i].y1}]");
-                 Console.WriteLine($"S [{program.elementsSubMatrix[i].square}]");
-                 Console.WriteLine($"color [{program.elementsSubMatrix[i].color}]");
+            for (int i = 0; i < program.countS; i++)
+            {
+                Console.WriteLine($"\nRESULT :");
+                Console.WriteLine($"[x0,y0] [{program.elementsSubMatrix[i].x0},{program.elementsSubMatrix[i].y0}]");
+                Console.WriteLine($"[x1,y1] [{program.elementsSubMatrix[i].x1},{program.elementsSubMatrix[i].y1}]");
+                Console.WriteLine($"S [{program.elementsSubMatrix[i].square}]");
+                Console.WriteLine($"color [{program.elementsSubMatrix[i].color}]");
 
-             }
+            }
         }
     }
 }
