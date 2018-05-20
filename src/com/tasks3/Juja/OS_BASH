@@ -1,14 +1,78 @@
 #! /bin/bash
+clear
 _homeCompDate="198910030927"
-_count=3
+read -a _count
+echo count= $_count
+
+
+renamelogs()
+{
+
+echo renamelogs
+    if [ -f "mylog_6.log" ];then
+        rm -rf mylog_6.log
+    fi
+    if [ -f "mylog_5.log" ];then
+        mv mylog_5.log mylog_6.log
+    fi
+    if [ -f "mylog_4.log" ];then
+            mv mylog_4.log mylog_5.log
+    fi
+    if [ -f "mylog_3.log" ];then
+        mv mylog_3.log mylog_4.log
+    fi
+    if [ -f "mylog_2.log" ];then
+        mv mylog_2.log mylog_3.log
+    fi
+    if [ -f "mylog_1.log" ];then
+        echo mv mylog_1.log mylog_2.log
+        mv mylog_1.log mylog_2.log
+    fi
+
+}
+
+log()
+{
+logline=$1
+    log_file_name="mylog"
+    touch $log_file_name.log
+    Maxlines=15
+
+    lines_cnt=`wc -l $log_file_name.log|awk '{print $1}'`
+    if [ $lines_cnt -gt $Maxlines ];then
+        renamelogs
+        mv $log_file_name.log ${log_file_name}_1.log
+        touch $log_file_name.log
+    fi
+    echo logline >> $log_file_name.log
+}
+
+rm -rf mylog*
+
 
 allow(){
     rm -rf Allow
-    mkdir Allow
-    cd Allow
-    echo allow=\(*.txt* *.mp3*\)>allow.conf
-    echo prohibit=\(prohibit.txt prohibit2.txt\)>>allow.conf
-    cd ..
+   # mkdir Allow
+   # cd Allow
+   #echo *.txt* *.mp3*>allow.conf
+   # echo *.jpg*>>allow.conf
+   # cd ..
+    mkdir  Allow
+    read -p "Enter masks of include files : " -a arr
+    for i in ${arr[@]}
+    do
+    echo -n "$i ">>Allow/allow.conf
+    done
+
+    echo "" >>Allow/allow.conf
+
+    read -p "Enter masks of exclude files: " -a arr
+    for i in ${arr[@]}
+    do
+    echo -n "$i ">>Allow/allow.conf
+    done
+
+    echo "" >>Allow/allow.conf
 }
 
 createFiles() # $1 - working dir
@@ -16,38 +80,39 @@ createFiles() # $1 - working dir
     same_data_files=(file.txt)
    d_data_files=(file.jpg file.mp3)
 
-    echo "I was called as : $@"
-    pushd $1 1>/dev/null
-    echo we are in `pwd`
-
+    log "I was called as :"
+    pushd $1 1>/dev/null #cd $1
+    log we are in `pwd`
+    content=""
     if [[ $1 = *"HomeComp" ]]; then
         _date=$_homeCompDate
-        c=3
     else
         _date=`date +"%Y%m%d%H%M"`
-        c=5
+        content="text"
     fi
-  #  c=$_count
-    echo $_count
+    c=$_count
+    log $_count
     while  (( $c > 0 )); do
 
         for i in "${same_data_files[@]}"
         do
             _fn=$i$c
-            echo creating $_fn with date $_date
+            log creating $_fn with date $_date
+            echo $content>$_fn
             touch -t $_date $_fn
         done
 
         for i in "${d_data_files[@]}"
         do
             _fn=$i$c
-            echo creating $_fn with current date
+            log creating $_fn with current date
+            echo $content>$_fn
             touch $_fn
            # sleep 1
         done
     c=$((c - 1))
     done;
-    popd 1>/dev/null
+    popd 1>/dev/null #cd ..
 }
 
 mydirs=(HomeComp WorkComp);
@@ -55,48 +120,55 @@ mydirs=(HomeComp WorkComp);
 
 for i in "${mydirs[@]}"
 do
-	echo deleting $i
+	log deleting $i
 	rm -rf $i
 done
 
-echo
-
 for i in "${mydirs[@]}"
 do
-	echo creating  $i
+	log creating  $i
 	mkdir $i
 done
 
 for i in "${mydirs[@]}"
 do
-	echo create Files in  $i
+	log create Files in  $i
     createFiles $i
 done
 
 allow
 
-. Allow/allow.conf
+_include=`head -n 1  Allow/allow.conf`
+_exclude=`tail -n 1  Allow/allow.conf`
 
-echo ${allow[@]}
-cd HomeComp
-arrHomeComp=`ls ${allow[@]}`
-echo HOMECOMP
-echo ${arrHomeComp[@]}
+log _include=${_include[@]}
+log _exclude=${_exclude[@]}
 
-
-for i in "${arrHomeComp[@]}"
+i=0
+for elem in ${_include[@]}
 do
-	echo create Files in  $i
-    date -r Allow/allow.conf +"%Y%m%d%H%M%S"
+	include[$i]="--include=$elem"
+	i=$(($i+1))
 done
 
+i=0
 
-cd ..
+for elem in ${_exclude[@]}
+do
+	exclude[$i]="--exclude=$elem"
+	i=$(($i+1))
+done
 
-
-cd WorkComp
-arrWorkComp=( $(ls) )
-echo WORKCOMP
-echo ${arrWorkComp[@]}
-cd ..
+log include=${include[@]}
+log exclude=${exclude[@]}
+logLinesArr=`rsync  --log-file=/dev/stdout -a -u "${exclude[@]}" "${include[@]}"  --exclude='*' "HomeComp"/ "WorkComp"/`
+for elem in ${logLinesArr[@]}
+do
+	log $elem
+done
+logLinesArr=`rsync  --log-file=/dev/stdout -a -u "${exclude[@]}" "${include[@]}"  --exclude='*' "WorkComp"/ "HomeComp"/`
+for elem in ${logLinesArr[@]}
+do
+	log $elem
+done
 
