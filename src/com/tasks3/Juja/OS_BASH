@@ -1,0 +1,102 @@
+#! /bin/bash
+_homeCompDate="198910030927"
+_count=3
+
+allow(){
+    rm -rf Allow
+    mkdir Allow
+    cd Allow
+    echo allow=\(*.txt* *.mp3*\)>allow.conf
+    echo prohibit=\(prohibit.txt prohibit2.txt\)>>allow.conf
+    cd ..
+}
+
+createFiles() # $1 - working dir
+{
+    same_data_files=(file.txt)
+   d_data_files=(file.jpg file.mp3)
+
+    echo "I was called as : $@"
+    pushd $1 1>/dev/null
+    echo we are in `pwd`
+
+    if [[ $1 = *"HomeComp" ]]; then
+        _date=$_homeCompDate
+        c=3
+    else
+        _date=`date +"%Y%m%d%H%M"`
+        c=5
+    fi
+  #  c=$_count
+    echo $_count
+    while  (( $c > 0 )); do
+
+        for i in "${same_data_files[@]}"
+        do
+            _fn=$i$c
+            echo creating $_fn with date $_date
+            touch -t $_date $_fn
+        done
+
+        for i in "${d_data_files[@]}"
+        do
+            _fn=$i$c
+            echo creating $_fn with current date
+            touch $_fn
+           # sleep 1
+        done
+    c=$((c - 1))
+    done;
+    popd 1>/dev/null
+}
+
+mydirs=(HomeComp WorkComp);
+
+
+for i in "${mydirs[@]}"
+do
+	echo deleting $i
+	rm -rf $i
+done
+
+echo
+
+for i in "${mydirs[@]}"
+do
+	echo creating  $i
+	mkdir $i
+done
+
+for i in "${mydirs[@]}"
+do
+	echo create Files in  $i
+    createFiles $i
+done
+
+allow
+
+. Allow/allow.conf
+
+echo ${allow[@]}
+cd HomeComp
+arrHomeComp=`ls ${allow[@]}`
+echo HOMECOMP
+echo ${arrHomeComp[@]}
+
+
+for i in "${arrHomeComp[@]}"
+do
+	echo create Files in  $i
+    date -r Allow/allow.conf +"%Y%m%d%H%M%S"
+done
+
+
+cd ..
+
+
+cd WorkComp
+arrWorkComp=( $(ls) )
+echo WORKCOMP
+echo ${arrWorkComp[@]}
+cd ..
+
